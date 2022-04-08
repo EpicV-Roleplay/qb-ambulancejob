@@ -45,7 +45,7 @@ function TakeOutVehicle(vehicleInfo)
     QBCore.Functions.SpawnVehicle(vehicleInfo, function(veh)
         SetVehicleNumberPlateText(veh, Lang:t('info.amb_plate')..tostring(math.random(1000, 9999)))
         SetEntityHeading(veh, coords.w)
-        exports['LegacyFuel']:SetFuel(veh, 100.0)
+        exports['lj-fuel']:SetFuel(veh, 100.0)
         TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)
         if Config.VehicleSettings[vehicleInfo] ~= nil then
             QBCore.Shared.SetDefaultVehicleExtras(veh, Config.VehicleSettings[vehicleInfo].extras)
@@ -288,10 +288,6 @@ local check = false
                     TriggerEvent('qb-ambulancejob:storeheli')
                 elseif variable == "takeheli" then
                     TriggerEvent('qb-ambulancejob:pullheli')
-                elseif variable == "roof" then
-                    TriggerEvent('qb-ambulancejob:elevator_main')
-                elseif variable == "main" then
-                    TriggerEvent('qb-ambulancejob:elevator_roof')
                 end
             end
             Wait(1)
@@ -303,12 +299,14 @@ RegisterNetEvent('qb-ambulancejob:stash', function()
     if onDuty then
         TriggerServerEvent("inventory:server:OpenInventory", "stash", "ambulancestash_"..QBCore.Functions.GetPlayerData().citizenid)
         TriggerEvent("inventory:client:SetCurrentStash", "ambulancestash_"..QBCore.Functions.GetPlayerData().citizenid)
+        --sTriggerServerEvent("jim-shops:ShopOpen", "shop", "ambulancestash_"..QBCore.Functions.GetPlayerData().citizenid)
     end
 end)
 
 RegisterNetEvent('qb-ambulancejob:armory', function()
     if onDuty then
         TriggerServerEvent("inventory:server:OpenInventory", "shop", "hospital", Config.Items)
+        --TriggerServerEvent("jim-shops:ShopOpen", "shop", "hospital", Config.Items)
     end
 end)
 
@@ -352,7 +350,7 @@ local function EMSHelicopter(k)
                             SetVehicleNumberPlateText(veh, Lang:t('info.heli_plate')..tostring(math.random(1000, 9999)))
                             SetEntityHeading(veh, coords.w)
                             SetVehicleLivery(veh, 1) -- Ambulance Livery
-                            exports['LegacyFuel']:SetFuel(veh, 100.0)
+                            exports['lj-fuel']:SetFuel(veh, 100.0)
                             TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)
                             TriggerEvent("vehiclekeys:client:SetOwner", QBCore.Functions.GetPlate(veh))
                             SetVehicleEngineOn(veh, true, true)
@@ -364,45 +362,6 @@ local function EMSHelicopter(k)
     end)
 end
 
-RegisterNetEvent('qb-ambulancejob:elevator_roof', function()
-    local ped = PlayerPedId()
-    for k, v in pairs(Config.Locations["roof"])do
-        DoScreenFadeOut(500)
-        while not IsScreenFadedOut() do
-            Wait(10)
-        end
-
-        currentHospital = k
-
-        local coords = Config.Locations["main"][currentHospital]
-        SetEntityCoords(ped, coords.x, coords.y, coords.z, 0, 0, 0, false)
-        SetEntityHeading(ped, coords.w)
-
-        Wait(100)
-
-        DoScreenFadeIn(1000)
-    end
-end)
-
-RegisterNetEvent('qb-ambulancejob:elevator_main', function()
-    local ped = PlayerPedId()
-    for k, v in pairs(Config.Locations["main"])do
-        DoScreenFadeOut(500)
-        while not IsScreenFadedOut() do
-            Wait(10)
-        end
-
-        currentHospital = k
-
-        local coords = Config.Locations["roof"][currentHospital]
-        SetEntityCoords(ped, coords.x, coords.y, coords.z, 0, 0, 0, false)
-        SetEntityHeading(ped, coords.w)
-
-        Wait(100)
-
-        DoScreenFadeIn(1000)
-    end
-end)
 
 RegisterNetEvent('EMSToggle:Duty', function()
     onDuty = not onDuty
@@ -516,47 +475,7 @@ if Config.UseTarget == 'true' then
                 },
                 distance = 1.5
             })
-        end
-        for k, v in pairs(Config.Locations["roof"]) do
-            exports['qb-target']:AddBoxZone("roof"..k, vector3(v.x, v.y, v.z), 2, 2, {
-                name = "roof"..k,
-                debugPoly = false,
-                heading = -20,
-                minZ = v.z - 2,
-                maxZ = v.z + 2,
-            }, {
-                options = {
-                    {
-                        type = "client",
-                        event = "qb-ambulancejob:elevator_roof",
-                        icon = "fas fa-hand-point-up",
-                        label = "Take Elevator",
-                        job = "ambulance"
-                    },
-                },
-                distance = 8
-            })
-        end
-        for k, v in pairs(Config.Locations["main"]) do
-            exports['qb-target']:AddBoxZone("main"..k, vector3(v.x, v.y, v.z), 1.5, 1.5, {
-                name = "main"..k,
-                debugPoly = false,
-                heading = -20,
-                minZ = v.z - 2,
-                maxZ = v.z + 2,
-            }, {
-                options = {
-                    {
-                        type = "client",
-                        event = "qb-ambulancejob:elevator_main",
-                        icon = "fas fa-hand-point-up",
-                        label = "Take Elevator",
-                        job = "ambulance"
-                    },
-                },
-                distance = 8
-            })
-        end
+        end       
     end)
 else
     CreateThread(function()
@@ -636,62 +555,6 @@ else
                 end
             else
                 inArmory = false
-                check = false
-                exports['qb-core']:HideText()
-            end
-        end)
-
-        local roofPoly = {}
-        for k, v in pairs(Config.Locations["roof"]) do
-            roofPoly[#roofPoly+1] = BoxZone:Create(vector3(vector3(v.x, v.y, v.z)), 2, 2, {
-                name="roof"..k,
-                debugPoly = false,
-                heading = 70,
-                minZ = v.z - 2,
-                maxZ = v.z + 2,
-            })
-        end
-
-        local roofCombo = ComboZone:Create(roofPoly, {name = "roofCombo", debugPoly = false})
-        roofCombo:onPlayerInOut(function(isPointInside)
-            if isPointInside and PlayerJob.name =="ambulance" then
-                onRoof = true
-                if onDuty then
-                    exports['qb-core']:DrawText(Lang:t('text.elevator_main'),'left')
-                    EMSControls("main")
-                else
-                    exports['qb-core']:DrawText(Lang:t('error.not_ems'),'left')
-                end
-            else
-                onRoof = false
-                check = false
-                exports['qb-core']:HideText()
-            end
-        end)
-
-        local mainPoly = {}
-        for k, v in pairs(Config.Locations["main"]) do
-            mainPoly[#mainPoly+1] = BoxZone:Create(vector3(vector3(v.x, v.y, v.z)), 1.5, 1.5, {
-                name="main"..k,
-                debugPoly = false,
-                heading = 70,
-                minZ = v.z - 2,
-                maxZ = v.z + 2,
-            })
-        end
-
-        local mainCombo = ComboZone:Create(mainPoly, {name = "mainPoly", debugPoly = false})
-        mainCombo:onPlayerInOut(function(isPointInside)
-            if isPointInside and PlayerJob.name =="ambulance" then
-                inMain = true
-                if onDuty then
-                    exports['qb-core']:DrawText(Lang:t('text.elevator_roof'),'left')
-                    EMSControls("roof")
-                else
-                    exports['qb-core']:DrawText(Lang:t('error.not_ems'),'left')
-                end
-            else
-                inMain = false
                 check = false
                 exports['qb-core']:HideText()
             end
