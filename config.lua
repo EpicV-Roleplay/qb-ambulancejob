@@ -5,9 +5,11 @@ Config.UseTarget = GetConvar('UseTarget', false)
 Config.MinimalDoctors = 2
 Config.WipeInventoryOnRespawn = true
 
+Config.Debug = true  -- false to remove green boxes
+
 Config.Locations = {
     ["checking"] = {
-	    [1] = vector3(308.19, -595.35, 43.29),
+	    [1] = vector3(307.54, -595.29, 43.28),
 	    [2] = vector3(-254.54, 6331.78, 32.43), -- paleto
     },
     ["duty"] = {

@@ -12,6 +12,7 @@ shared_scripts {
 
 client_scripts {
 	'client/main.lua',
+	'client/chairs.lua',
 	'client/wounding.lua',
 	'client/laststand.lua',
 	'client/job.lua',
